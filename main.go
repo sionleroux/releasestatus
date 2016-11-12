@@ -4,11 +4,15 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"strconv"
 )
 
 func main() {
 
-	fmt.Printf("Release Status Server running on localhost:8080\n")
+	// server name is omitted before : because it's localhost
+	host := fmt.Sprint(":", getPort())
+	log.Printf("Release Status Server running on localhost%v\n", host)
 
 	releasing := false
 
@@ -34,6 +38,23 @@ func main() {
 		}
 	})
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(host, nil))
 
+}
+
+// Gets program port from $RS_PORT env var
+func getPort() int {
+
+	portstr := os.Getenv("RS_PORT")
+	if portstr == "" {
+		log.Fatal("No port specified")
+	}
+
+	port, err := strconv.Atoi(portstr)
+	if err != nil {
+		log.Fatal("Port is non-numeric: ", err)
+	}
+	fmt.Println(port)
+
+	return port
 }
