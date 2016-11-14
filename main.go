@@ -28,6 +28,7 @@ func main() {
 	// current release (starts off empty)
 	cur := def
 
+	// Starts the release unless one is already running
 	http.HandleFunc("/start", func(w http.ResponseWriter, r *http.Request) {
 		if cur.Running {
 			if cur.Author == "" {
@@ -35,7 +36,7 @@ func main() {
 			} else {
 				log.Printf("Refusing start request because release already started by %v at %v\n", cur.Author, cur.StartedAt)
 			}
-			fmt.Fprint(w, "0")
+			fmt.Fprint(w, "0") // respond with failure
 		} else {
 			cur = Release{
 				r.URL.Query().Get("name"),
@@ -47,21 +48,23 @@ func main() {
 			} else {
 				log.Printf("Starting new release by %v\n", cur.Author)
 			}
-			fmt.Fprint(w, "1")
+			fmt.Fprint(w, "1") // respond with success
 		}
 	})
 
+	// Stops the release unless it's already stopped
 	http.HandleFunc("/stop", func(w http.ResponseWriter, r *http.Request) {
 		if cur.Running {
 			log.Print("Stopping release")
 			cur = def
-			fmt.Fprint(w, "1")
+			fmt.Fprint(w, "1") // respond with success
 		} else {
 			log.Print("Refusing to stop release because no release running")
-			fmt.Fprint(w, "0")
+			fmt.Fprint(w, "0") // respond with failure
 		}
 	})
 
+	// Actual Work
 	log.Fatal(http.ListenAndServe(host, nil))
 
 }
