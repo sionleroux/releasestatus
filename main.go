@@ -61,7 +61,6 @@ func getPort() int {
 	if err != nil {
 		log.Fatal("Port is non-numeric: ", err)
 	}
-	fmt.Println(port)
 
 	return port
 }
