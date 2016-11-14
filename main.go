@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 )
 
 func main() {
@@ -14,30 +15,46 @@ func main() {
 	host := fmt.Sprint(":", getPort())
 	log.Printf("Release Status Server running on localhost%v\n", host)
 
-	releasing := false
-	name := ""
+	// Persistent release meta-data
+	type Release struct {
+		Author    string    // the person who started the release
+		Running   bool      // whether the release is running or not
+		StartedAt time.Time // timestamp when the release started
+	}
+
+	// default (empty) release
+	def := Release{}
+
+	// current release (starts off empty)
+	cur := def
 
 	http.HandleFunc("/start", func(w http.ResponseWriter, r *http.Request) {
-		if releasing {
-			if name == "" {
-				log.Print("Refusing start request because release already running")
+		if cur.Running {
+			if cur.Author == "" {
+				log.Printf("Refusing start request because release already running since %v\n", cur.StartedAt)
 			} else {
-				log.Printf("Refusing start request because release already started by %v\n", name)
+				log.Printf("Refusing start request because release already started by %v at %v\n", cur.Author, cur.StartedAt)
 			}
 			fmt.Fprint(w, "0")
 		} else {
-			log.Print("Starting new release")
-			releasing = true
-			name = r.URL.Query().Get("name")
+			cur = Release{
+				r.URL.Query().Get("name"),
+				true,
+				time.Now(),
+			}
+			if cur.Author == "" {
+				log.Print("Starting new release")
+			} else {
+				log.Printf("Starting new release by %v\n", cur.Author)
+			}
 			fmt.Fprint(w, "1")
 		}
 	})
 
 	http.HandleFunc("/stop", func(w http.ResponseWriter, r *http.Request) {
-		if releasing {
+		if cur.Running {
 			log.Print("Stopping release")
-			releasing = false
-			name = ""
+			cur = def
 			fmt.Fprint(w, "1")
 		} else {
 			log.Print("Refusing to stop release because no release running")
