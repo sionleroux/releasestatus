@@ -39,7 +39,7 @@ To mark a release as running call the start endpoint:
 
 	curl localhost:8080/start
 
-To stop mark it as done, call the stop endpoint:
+To mark it as done, call the stop endpoint:
 
 	curl localhost:8080/stop
 
