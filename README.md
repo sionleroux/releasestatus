@@ -73,8 +73,7 @@ Docker
 
 There is a [docker/Dockerfile](docker/Dockerfile) for building
 releasestatus as a Docker container from scratch.  It adds the
-Linux-built releasestatus binary as the Docker command, as well as a
-zoneinfo archive for setting the timezone inside the container.
+Linux-built releasestatus binary as the Docker command.
 
 It has a Makefile to reduce the amount of typing for the Docker build
 because the docker commands are quite long.
@@ -83,7 +82,6 @@ The Makefile's default target will **build and run the Docker image**.
 It has some default variables which can be overridden from the
 environment:
 
- - `TZ`:   the timezone the container will run in (default: CET)
  - `PORT`: the port the service will run on (default: 8080)
  - `TAG`:  the image tag in Docker (default: releasestatus)
 
@@ -91,20 +89,14 @@ It also has separate make targets:
 
  - `container`: just build the image
  - `run`: run the container (assumes it is built)
- - `clean`: removes the binaries and archive used during the process
+ - `clean`: removes the built binaries
 
 The container from scratch is very small, currently ~5mb, it contains
-only the go binary and zone info.  For this to work correctly the binary
-is built with netgo included (which has a native implementation of host
-lookup etc), so that it can handle network requests.  The go build tool
-uses special environment variables to build for Linux amd64, suitable
-for running in Docker.  Because I also want to be able to set the time
-zone for the container (I'd like the logging timestamps to be in Central
-European Time) it needs a zoneinfo archive, which is borrowed from the
-system's `/usr/share/zoneinfo` directory at build time.  These are the
-only 2 files the container currently needs to run, and in fact, if
-you're fine with running it in UCT, you don't even need the zoneinfo
-file.
+only the go binary.  For this to work correctly the binary is built with
+netgo included (which has a native implementation of host lookup etc),
+so that it can handle network requests.  The go build tool uses special
+environment variables to build for Linux amd64, suitable for running in
+Docker.  This is the only file the container currently needs to run.
 
 The run target will use your environment variables (if provided) to
 override my default settings, and the container target can use the `TAG`
