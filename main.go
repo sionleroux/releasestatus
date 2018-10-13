@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,63 +11,58 @@ import (
 )
 
 func main() {
-
 	// server name is omitted before : because it's localhost
 	host := fmt.Sprint(":", getPort())
 	log.Printf("Release Status Server running on localhost%v\n", host)
 
-	// Persistent release meta-data
-	type Release struct {
-		Author    string    // the person who started the release
-		Running   bool      // whether the release is running or not
-		StartedAt time.Time // timestamp when the release started
-	}
-
-	// default (empty) release
-	def := Release{}
-
 	// current release (starts off empty)
-	cur := def
+	cur := &Release{}
 
-	// Starts the release unless one is already running
 	http.HandleFunc("/start", func(w http.ResponseWriter, r *http.Request) {
-		if cur.Running {
-			if cur.Author == "" {
-				log.Printf("Refusing start request because release already running since %v\n", cur.StartedAt)
-			} else {
-				log.Printf("Refusing start request because release already started by %v at %v\n", cur.Author, cur.StartedAt)
-			}
-			fmt.Fprint(w, "0") // respond with failure
-		} else {
-			cur = Release{
-				r.URL.Query().Get("name"),
-				true,
-				time.Now(),
-			}
-			if cur.Author == "" {
-				log.Print("Starting new release")
-			} else {
-				log.Printf("Starting new release by %v\n", cur.Author)
-			}
-			fmt.Fprint(w, "1") // respond with success
-		}
+		fmt.Fprint(w, buildResponse(cur.start(r.URL.Query().Get("name"))))
 	})
-
-	// Stops the release unless it's already stopped
 	http.HandleFunc("/stop", func(w http.ResponseWriter, r *http.Request) {
-		if cur.Running {
-			log.Print("Stopping release")
-			cur = def
-			fmt.Fprint(w, "1") // respond with success
-		} else {
-			log.Print("Refusing to stop release because no release running")
-			fmt.Fprint(w, "0") // respond with failure
-		}
+		fmt.Fprint(w, buildResponse(cur.stop()))
 	})
-
-	// Actual Work
 	log.Fatal(http.ListenAndServe(host, nil))
+}
 
+func buildResponse(err error) int {
+	if err != nil {
+		return 0
+	}
+	return 1
+}
+
+// Persistent release meta-data
+type Release struct {
+	Author    string    // the person who started the release
+	Running   bool      // whether the release is running or not
+	StartedAt time.Time // timestamp when the release started
+}
+
+// start marks a release as started unless another release is already running
+func (r *Release) start(author string) error {
+	if author == "" {
+		author = "an unknown user"
+	}
+	if r.Running {
+		log.Printf("Refusing start request because release already started by %v at %v\n", r.Author, r.StartedAt)
+		return errors.New("release already in progress")
+	}
+	log.Printf("Starting new release by %v\n", author)
+	*r = Release{author, true, time.Now()}
+	return nil
+}
+
+func (r *Release) stop() error {
+	if !r.Running {
+		log.Print("Refusing to stop release because no release running")
+		return errors.New("no release to stop")
+	}
+	log.Print("Stopping release")
+	*r = Release{}
+	return nil
 }
 
 // Gets program port from $RS_PORT env var
