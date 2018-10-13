@@ -67,16 +67,15 @@ func (r *Release) stop() error {
 
 // Gets program port from $RS_PORT env var
 func getPort() int {
-
+	const defaultport string = "8080"
 	portstr := os.Getenv("RS_PORT")
 	if portstr == "" {
-		log.Fatal("No port specified")
+		log.Printf("No port specified, falling back to default: %s\n", defaultport)
+		portstr = defaultport
 	}
-
 	port, err := strconv.Atoi(portstr)
 	if err != nil {
 		log.Fatal("Port is non-numeric: ", err)
 	}
-
 	return port
 }
