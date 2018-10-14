@@ -1,3 +1,4 @@
+// The releasestatus binary is a small daemon to track the state of QA releases.
 package main
 
 import (
@@ -12,7 +13,7 @@ import (
 
 func main() {
 	// server name is omitted before : because it's localhost
-	host := fmt.Sprint(":", getPort())
+	host := fmt.Sprint(":", httpPort())
 	log.Printf("Release Status Server running on localhost%v\n", host)
 
 	// current release (starts off empty)
@@ -27,6 +28,8 @@ func main() {
 	log.Fatal(http.ListenAndServe(host, nil))
 }
 
+// buildResponse formats the result of an action in a way it can be consumed by
+// an API client.
 func buildResponse(err error) int {
 	if err != nil {
 		return 0
@@ -34,14 +37,14 @@ func buildResponse(err error) int {
 	return 1
 }
 
-// Persistent release meta-data
+// Release persists meta-data about a running release.
 type Release struct {
 	Author    string    // the person who started the release
 	Running   bool      // whether the release is running or not
 	StartedAt time.Time // timestamp when the release started
 }
 
-// start marks a release as started unless another release is already running
+// start marks a Release as started unless another release is already running.
 func (r *Release) start(author string) error {
 	if author == "" {
 		author = "an unknown user"
@@ -55,6 +58,7 @@ func (r *Release) start(author string) error {
 	return nil
 }
 
+// stop marks a Release as stopped unless it is already stopped.
 func (r *Release) stop() error {
 	if !r.Running {
 		log.Print("Refusing to stop release because no release running")
@@ -65,8 +69,8 @@ func (r *Release) stop() error {
 	return nil
 }
 
-// Gets program port from $RS_PORT env var
-func getPort() int {
+// Gets program port from $RS_PORT env var.
+func httpPort() int {
 	const defaultport string = "8080"
 	portstr := os.Getenv("RS_PORT")
 	if portstr == "" {
