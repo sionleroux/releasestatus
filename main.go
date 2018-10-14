@@ -8,8 +8,12 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 )
+
+// TODO: make this non-global
+var Lock sync.Mutex // synchronise access to the release status
 
 func main() {
 	// server name is omitted before : because it's localhost
@@ -49,6 +53,8 @@ func (r *Release) start(author string) error {
 	if author == "" {
 		author = "an unknown user"
 	}
+	Lock.Lock()
+	defer Lock.Unlock()
 	if r.Running {
 		log.Printf("Refusing start request because release already started by %v at %v\n", r.Author, r.StartedAt)
 		return errors.New("release already in progress")
@@ -60,6 +66,8 @@ func (r *Release) start(author string) error {
 
 // stop marks a Release as stopped unless it is already stopped.
 func (r *Release) stop() error {
+	Lock.Lock()
+	defer Lock.Unlock()
 	if !r.Running {
 		log.Print("Refusing to stop release because no release running")
 		return errors.New("no release to stop")
