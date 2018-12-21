@@ -19,6 +19,9 @@ the stop endpoint and the server will respond with true or false:
 
 Basically it allows you to only start *one release at a time*.
 
+If releasing is blocked then new releases cannot be started until
+unblocked.
+
 
 Usage
 -----
@@ -43,7 +46,7 @@ To mark it as done, call the stop endpoint:
 
 	curl localhost:8080/stop
 
-You can also add a `name` parameter to let other attempted starters know
+You can add a `name` parameter to let other attempted starters know
 who started the running release:
 
 	curl localhost:8080/start?name=sion
@@ -51,6 +54,9 @@ who started the running release:
 The response will be `0` or `1`, based on the table above, and you can
 use this in deploy scripts to determine whether to proceed with the
 release or abort.
+
+You can block further releases by calling the `/block` endpoint and
+allow them again by calling `/unblock`.
 
 
 Hacking

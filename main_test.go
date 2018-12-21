@@ -35,7 +35,7 @@ func TestStart(t *testing.T) {
 
 func TestStop(t *testing.T) {
 	var err error
-	cur := Release{"Bob", true, time.Now()}
+	cur := Release{"Bob", true, false, time.Now()}
 	err = cur.stop()
 
 	// Release stops from running state
@@ -52,5 +52,18 @@ func TestStop(t *testing.T) {
 	err = cur.stop()
 	if err == nil {
 		t.Errorf("Expected failed release stop, got: %v:", err)
+	}
+}
+
+func TestBlock(t *testing.T) {
+	cur := Release{"Alice", false, true, time.Now()}
+	err := cur.start("Bob")
+
+	if err == nil {
+		t.Errorf("Expected failed release start, got %v", err)
+	}
+
+	if err.Error() != "release blocked" {
+		t.Errorf("Expected release to be blocked, got other error: %v", err)
 	}
 }
