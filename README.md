@@ -114,4 +114,4 @@ This all-together makes building, running and deploying the dockerised
 version of this service really convenient and easy.
 
 ---
-Written by Siôn le Roux <sion.leroux@schibsted.hu>
+Written by Siôn le Roux <sion@sionleroux.com>
